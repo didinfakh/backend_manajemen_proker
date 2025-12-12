@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Container\Attributes\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB as FacadesDB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -46,8 +48,9 @@ class AuthController extends Controller
             ], 401);
         }
 
+        FacadesDB::enableQueryLog();
         $user = User::where('email', $request->email)->firstOrFail();
-
+        ddQueryLog();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
