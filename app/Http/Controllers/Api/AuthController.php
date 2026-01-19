@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Http;
 use Illuminate\Container\Attributes\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,20 +43,30 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        if (! Auth::attempt($request->only('email', 'password'))) {
+
+        $url_sso = env("APP_SSO_URL");
+        if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
 
-        FacadesDB::enableQueryLog();
+        // FacadesDB::enableQueryLog();
         $user = User::where('email', $request->email)->firstOrFail();
-        ddQueryLog();
+        // ddQueryLog();
         $token = $user->createToken('auth_token')->plainTextToken;
+        $response_sso = Http::withHeaders([
+            'id_application' => '1',
+        ])->post($url_sso . '/api/loginbyid', [
+                    'id_user' => $user->id_organization
+                ]);
+
 
         return response()->json([
             'message' => 'Login success',
             'access_token' => $token,
+            'user' => $user,
+            'application' => $response_sso->json(),
             'token_type' => 'Bearer'
         ]);
     }

@@ -13,3 +13,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [\App\Http\Controllers\Api\AuthController::class, 'logout']);
 });
+Route::middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('sys-permissions', \App\Http\Controllers\SysPermissionsController::class);
+    });
