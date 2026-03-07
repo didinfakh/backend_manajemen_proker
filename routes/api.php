@@ -17,3 +17,8 @@ Route::middleware('auth:sanctum')
     ->group(function () {
         Route::apiResource('sys-permissions', \App\Http\Controllers\SysPermissionsController::class);
     });
+
+Route::middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('sys-user-groups', \App\Http\Controllers\SysUserGroupsController::class);
+    });

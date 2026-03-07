@@ -1,0 +1,7 @@
+CRUD generator
+php artisan make:crud nama_table
+php artisan make:crud nama_controler --table=nama_table
+
+
+
+pengaturan cors ganti url frontend di cors.php

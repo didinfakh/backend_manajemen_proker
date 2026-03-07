@@ -70,3 +70,14 @@ if (!function_exists('ddQueryLog')) {
     }
 }
 
+function getInitials($name)
+{
+    if (!$name) return '';
+
+    $words = preg_split('/\s+/', trim($name));
+
+    $first = strtoupper(substr($words[0], 0, 1));
+    $second = isset($words[1]) ? strtoupper(substr($words[1], 0, 1)) : '';
+
+    return $first . $second;
+}
