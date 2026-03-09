@@ -13,6 +13,9 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'sso' => [
+        'url' => env('APP_SSO_URL'),
+    ],
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),

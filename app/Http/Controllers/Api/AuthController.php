@@ -44,7 +44,7 @@ class AuthController extends Controller
     }
     public function login(Request $request)
     {
-        $url_sso = env("APP_SSO_URL");
+       
 
 
         if (!Auth::attempt($request->only('email', 'password'))) {
@@ -60,6 +60,8 @@ class AuthController extends Controller
         // ===============================
         // SSO
         // ===============================
+        $url_sso = config('services.sso.url');
+        
         $response_sso = Http::withHeaders([
             'id_organization' => '1',
         ])->post($url_sso . '/api/loginbyid', [
@@ -78,20 +80,16 @@ class AuthController extends Controller
             )
             ->get();
 
-        if ($group->count() > 1) {
-            $group = $group->first();
-        } else {
-
-            $id_sys_group = $group[0]->id_sys_group;
+        $permissionMap = [];
+        if ($group->count() > 0) {
+            if ($group->count() > 1) {
+                // If user has multiple groups, you might want to merge permissions or just take the first
+                $id_sys_group = $group->first()->id_sys_group;
+            } else {
+                $id_sys_group = $group[0]->id_sys_group;
+            }
             $permissionMap = $this->getmenu($id_sys_group, $user->id_organization);
         }
-
-        // $permissionMap = $this->getmenu($group->id_group, $user->id_organization);
-        // foreach ($permissions as $row) {
-        //     if ($row->menu) {
-        //         $permissionMap[$row->menu] = json_decode($row->actions, true);
-        //     }
-        // }
 
         // ===============================
         // SIMPAN KE CACHE
