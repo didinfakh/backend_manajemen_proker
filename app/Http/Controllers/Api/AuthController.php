@@ -114,6 +114,7 @@ class AuthController extends Controller
     public function getmenu($id_group, $id_organization)
     {
 
+   
         $rows = DB::select("
     select
       sm.id_sys_menu as id_menu,

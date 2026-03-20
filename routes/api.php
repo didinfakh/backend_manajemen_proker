@@ -22,3 +22,13 @@ Route::middleware('auth:sanctum')
     ->group(function () {
         Route::apiResource('sys-user-groups', \App\Http\Controllers\SysUserGroupsController::class);
     });
+
+Route::middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('sys-menu-permissions', \App\Http\Controllers\SysMenuPermissionsController::class);
+    });
+
+Route::middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('sys-menus', \App\Http\Controllers\SysMenuController::class);
+    });

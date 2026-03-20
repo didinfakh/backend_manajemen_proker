@@ -14,13 +14,17 @@ trait ResponseUtil
      * @param string|null $message
      * @return JsonResponse
      */
-    public function respond($data, $code = 200, $message = null): JsonResponse
+    public function respond($data, $code = 200, $message = null, $extra = []): JsonResponse
     {
         $response = [
             'success' => $code >= 200 && $code < 300,
             'message' => $message,
             'data' => $data,
         ];
+
+        if (!empty($extra)) {
+            $response = array_merge($response, $extra);
+        }
 
         return response()->json($response, $code);
     }

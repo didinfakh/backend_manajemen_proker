@@ -65,13 +65,17 @@ class BaseController extends ResourceController
         // 	$db = $db->where($filter);
         $data = $db->paginate($limit);
 
-        return $this->respond([
-            'page' => $data->currentPage(),
-            'page_size' => $data->perPage(),
-            'data' => $data->items(),
-            'total_page' => ceil($data->total() / $limit),
-            'total_records' => $data->total()
-        ]);
+        return $this->respond(
+            $data->items(),
+            200,
+            null,
+            [
+                'page' => $data->currentPage(),
+                'page_size' => $data->perPage(),
+                'total_page' => ceil($data->total() / $limit),
+                'total_records' => $data->total()
+            ]
+        );
         // return $this->respond([
         //     'page' => $this->model->pager->getCurrentPage(),
         //     'page_size' => $limit,

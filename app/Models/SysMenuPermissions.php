@@ -2,21 +2,15 @@
 
 namespace App\Models;
 
-class SysMenu extends BaseModel
+class SysMenuPermissions extends BaseModel
 {
-    protected $table = 'sys_menu';
-
-    protected $primaryKey = 'id_sys_menu';
+    protected $table = 'sys_menu_permissions';
 
     protected $fillable = [
-        'name',
-        'description',
-        'id_organization',
-        'url',
-        'visible',
-        'id_menu_parent',
-        'menu_order',
-        'icon',
+        'id_sys_menu_permission',
+        'id_sys_menu',
+        'id_sys_permission',
+        'id_organization'
     ];
 
     protected $orderDefault = 'id desc';
