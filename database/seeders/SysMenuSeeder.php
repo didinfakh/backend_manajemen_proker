@@ -3,70 +3,59 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\SysMenu;
-use App\Models\SysMenuPermission;
+use Illuminate\Support\Facades\DB;
 
 class SysMenuSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        // Sesuaikan dengan organization default yang ada di DatabaseSeeder
-        $organizationId = 17;
+        // Clear existing data
+        DB::table('sys_menu')->truncate();
 
-        // Data Master Menu
-        $menus = [
+        $data = [
             [
-                'url' => '/menu',
+                'id_sys_menu' => '2',
+                'name' => 'master',
+                'description' => 'menu master',
+                'created_at' => null,
+                'updated_at' => null,
+                'id_organization' => '17',
+                'url' => null,
+                'visible' => 't',
+                'id_menu_parent' => null,
+                'menu_order' => null,
+                'icon' => null,
+            ],
+            [
+                'id_sys_menu' => '5',
                 'name' => ' Menu',
                 'description' => 'Manage system menus',
+                'created_at' => '2026-03-28 13:30:48',
+                'updated_at' => '2026-03-28 13:30:48',
+                'id_organization' => '17',
+                'url' => '/menu',
+                'visible' => 't',
+                'id_menu_parent' => '2',
+                'menu_order' => '90',
                 'icon' => 'fa fa-cogs',
-                'menu_order' => 90,
-                'visible' => 1,
-                'id_menu_parent' => 2,
             ],
-            // [
-            //     'url' => '/role',
-            //     'name' => 'Setting Role',
-            //     'description' => 'Manage application roles and permissions',
-            //     'icon' => 'fa fa-key',
-            //     'menu_order' => 91,
-            //     'visible' => 1,
-            // ]
+            [
+                'id_sys_menu' => '4',
+                'name' => 'Setting Roleeeee',
+                'description' => 'Manage application roles and permissions',
+                'created_at' => '2026-03-09 02:08:15',
+                'updated_at' => '2026-03-09 02:08:15',
+                'id_organization' => '17',
+                'url' => '/role',
+                'visible' => 't',
+                'id_menu_parent' => null,
+                'menu_order' => '91',
+                'icon' => '🔑',
+            ],
         ];
 
-        foreach ($menus as $m) {
-            // Kita gunakan updateOrCreate agar tidak duplikat jika di-run berkali-kali
-            $menu = SysMenu::updateOrCreate(
-                [
-                    'url' => $m['url'],
-                    'id_organization' => $organizationId
-                ],
-                [
-                    'name' => $m['name'],
-                    'description' => $m['description'],
-                    'icon' => $m['icon'],
-                    'menu_order' => $m['menu_order'],
-                    'visible' => $m['visible'],
-                ]
-            );
-
-            // Otomatis assign permissions 1, 2, 3, 4
-            $permissions = [1, 2, 3, 4];
-            foreach ($permissions as $permissionId) {
-                // Gunakan updateOrCreate atau firstOrCreate untuk mencegah duplikat
-                SysMenuPermission::firstOrCreate([
-                    'id_sys_menu' => $menu->getKey(),
-                    'id_sys_permission' => $permissionId,
-                    'id_organization' => $organizationId,
-                ]);
-            }
+        foreach (array_chunk($data, 100) as $chunk) {
+            DB::table('sys_menu')->insert($chunk);
         }
-
-        $this->command->info('Master Menu & Role Menu beserta permissions telah berhasil di-seed.');
     }
 }

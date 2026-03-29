@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "postgres-db-lokal": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-postgres",
+                "postgresql://vionic_dev:0852353@localhost:5432/manajemen_proker"
+            ]
+        }
+    }
+}

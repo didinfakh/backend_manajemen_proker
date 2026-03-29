@@ -15,4 +15,17 @@ class SysGroup extends BaseModel
         'name',
         'description',
     ];
+
+    public function scopeSearch($query, $search)
+    {
+        if (!$search) return $query;
+
+        foreach ($search as $field => $value) {
+            if (!empty($value)) {
+                $query->where($field, 'like', $value);
+            }
+        }
+
+        return $query;
+    }
 }

@@ -17,11 +17,17 @@ class BaseController extends ResourceController
     protected $data = [];
 
     /**
-     * Return an array of resource objects, themselves in array format
-     *
-     * @return array	an array
+     * Menampilkan List Data (Paginated)
+     * 
+     * Mengambil daftar data dengan pagination. Mendukung sorting, filtering, dan pencarian spesifik.
+     * 
+     * @queryParam q array Filter array (contoh: q[nama]=keyword). Example: {"nama": "test"}
+     * @queryParam page int Halaman yang aktif. Example: 1
+     * @queryParam pagesize int Jumlah baris data per halaman. Example: 10
+     * @queryParam order string Urutan data (kolom asc/desc). Example: id_sys_group desc
+     * 
+     * @response array{data: array, page: int, page_size: int, total_page: int, total_records: int}
      */
-
     public function index(Request $request): JsonResponse
     {
         $search = $request->get('q');
@@ -86,9 +92,14 @@ class BaseController extends ResourceController
     }
 
     /**
-     * Return the properties of a resource object
+     * Menampilkan Detail Data
      *
-     * @return array	an array
+     * Berfungsi untuk mendapatkan properti lengkap dari satu buah record berdasarkan Primary Key.
+     * 
+     * @param int $id Primary ID dari tabel model yang bersangkutan.
+     * 
+     * @response 200 array{data: object}
+     * @response 404 array{success: boolean, message: string}
      */
     public function show($id = null): JsonResponse
     {
@@ -104,9 +115,14 @@ class BaseController extends ResourceController
     }
 
     /**
-     * Create a new resource object, from "posted" parameters
+     * Menambahkan Data Baru
      *
-     * @return array	an array
+     * Digunakan untuk meng-insert data/resource baru. Validasi dikontrol melalui properti model `$rules`.
+     * 
+     * @param Request $request
+     * 
+     * @response 201 array{data: object, message: string}
+     * @response 400 array{success: boolean, message: string, errors: array}
      */
     public function store(Request $request): JsonResponse
     {
@@ -124,9 +140,15 @@ class BaseController extends ResourceController
     }
 
     /**
-     * Add or update a model resource, from "posted" properties
+     * Update (Edit) Data
      *
-     * @return array	an array
+     * Berfungsi untuk memperbarui record / object yang ada di tabel. Tervalidasi sebelum diproses.
+     * 
+     * @param int $id Primary ID data yang ingin diupdate.
+     * @param Request $request
+     * 
+     * @response 200 array{data: object, message: string}
+     * @response 404 array{success: boolean, message: string}
      */
     public function update($id = null, Request $request): JsonResponse
     {
@@ -150,9 +172,14 @@ class BaseController extends ResourceController
     }
 
     /**
-     * Delete the designated resource object from the model
+     * Hapus Data (Delete)
      *
-     * @return array	an array
+     * Menghapus record tertentu berdasarkan identifier dan merekam action "delete" ke sys_logs (jika aktif).
+     * 
+     * @param int $id Primary ID data yang ingin dihapus.
+     * 
+     * @response 200 array{data: array{id: int}, message: string}
+     * @response 404 array{success: boolean, message: string}
      */
     public function destroy($id = null): JsonResponse
     {

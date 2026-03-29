@@ -1,0 +1,5 @@
+di sys_group_permissions dari frontend ada kemungkinan untuk menambahakan action yang belum ada di sys_permissions
+
+buatkan API untuk menambahakan action ke sys_permissions dan juga di sys_group_permissions
+
+di front end nya saya ingin ada tombol tambah action jika di klik akan muncul modal untuk menambahakan action pada menu yang di pilih tapi bisa juga action tersebut custom baru

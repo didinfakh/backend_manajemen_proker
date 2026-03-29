@@ -1,0 +1,1297 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Manajemen Proker API",
+        "description": "Dokumentasi API untuk Sistem Manajemen Program Kerja. Mencakup Authentication, Menu Management, Role & Group Management, dan Permission Management.",
+        "contact": {
+            "email": "admin@manajemenproker.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8001",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Pendaftaran Pengguna Baru",
+                "description": "API untuk registrasi akun user. Mengembalikan detail user beserta Access Token (Bearer).",
+                "operationId": "8e4e3cb7b46126f4696379d3c7eeb4ad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registrasi berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login Pengguna (SSO & Sanctum)",
+                "description": "API Login terintegrasi SSO. Mengembalikan token, data user, dan mapping hak akses menu beserta permissions.",
+                "operationId": "222b2625838e3c57e017987f73598fda",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "admin@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login success"
+                                        },
+                                        "response_sso": {
+                                            "type": "object"
+                                        },
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "permission": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout / Akhiri Sesi",
+                "description": "Menghancurkan token pengguna saat ini.",
+                "operationId": "ad65cbbd4e9f201619eae184a5961a98",
+                "responses": {
+                    "200": {
+                        "description": "Logout berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "logout success"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-groups": {
+            "get": {
+                "tags": [
+                    "Sys Groups"
+                ],
+                "summary": "Daftar Grup / Role (Paginated)",
+                "description": "Mengambil daftar seluruh grup pengguna dengan pagination.",
+                "operationId": "6c465652a46f0fc6c09416940263c0fc",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Halaman aktif",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pagesize",
+                        "in": "query",
+                        "description": "Jumlah data per halaman",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id_sys_group": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Super Admin"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Administrator utama"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "page_size": {
+                                            "type": "integer"
+                                        },
+                                        "total_page": {
+                                            "type": "integer"
+                                        },
+                                        "total_records": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Sys Groups"
+                ],
+                "summary": "Tambah Grup Baru",
+                "description": "Membuat grup / role pengguna baru.",
+                "operationId": "bd7538184ba150efc58853fa1968906f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Editor"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Role untuk editor konten"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Grup berhasil dibuat",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "data created"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-groups/{id}": {
+            "get": {
+                "tags": [
+                    "Sys Groups"
+                ],
+                "summary": "Detail Grup",
+                "description": "Menampilkan detail satu grup berdasarkan ID.",
+                "operationId": "f0cd24b2052c404d00fc5a76ead810d9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Grup",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Sys Groups"
+                ],
+                "summary": "Update Grup",
+                "description": "Memperbarui data grup yang sudah ada.",
+                "operationId": "17e1306f6d5112ce23ca6161d4281b15",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Grup",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Editor Updated"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Deskripsi baru"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data berhasil diupdate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "data updated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Sys Groups"
+                ],
+                "summary": "Hapus Grup",
+                "description": "Menghapus grup berdasarkan ID.",
+                "operationId": "5102427df5fabd8885af15b7c5c6d243",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Grup",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data berhasil dihapus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "data deleted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-group-permissions/{groupId}/mapping": {
+            "get": {
+                "tags": [
+                    "Sys Group Permissions"
+                ],
+                "summary": "Mapping Hak Akses Role (Tree)",
+                "description": "Mengembalikan keseluruhan struktur menu bersarang (Tree), lengkap dengan setiap opsi akses beserta status checked true/false untuk grup tertentu.",
+                "operationId": "af119f6799ca4e24838a3b71bf993c6f",
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "description": "ID Grup / Role",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id_sys_menu": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Dashboard"
+                                                    },
+                                                    "url": {
+                                                        "type": "string",
+                                                        "example": "/dashboard"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "🏠"
+                                                    },
+                                                    "permissions": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id_sys_menu_permission": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "code": {
+                                                                    "type": "string",
+                                                                    "example": "index"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Index Access"
+                                                                },
+                                                                "checked": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "children": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-group-permissions/{groupId}/sync": {
+            "post": {
+                "tags": [
+                    "Sys Group Permissions"
+                ],
+                "summary": "Simpan / Sinkronisasi Hak Akses Role",
+                "description": "Menyimpan perubahan hak akses. Semua permission lama untuk grup tersebut akan ditimpa dengan array permissions baru.",
+                "operationId": "4f987fa7718484cf492373d9f9a31eae",
+                "parameters": [
+                    {
+                        "name": "groupId",
+                        "in": "path",
+                        "description": "ID Grup / Role",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "permissions"
+                                ],
+                                "properties": {
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            5,
+                                            8
+                                        ]
+                                    },
+                                    "id_organization": {
+                                        "type": "integer",
+                                        "example": 17
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hak akses berhasil diperbarui",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Hak akses berhasil diperbarui"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal memperbarui",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-group-permissions/add-action": {
+            "post": {
+                "tags": [
+                    "Sys Group Permissions"
+                ],
+                "summary": "Tambah Custom Action ke Menu",
+                "description": "Mendaftarkan aksi kustom baru (misal: export_pdf) ke sys_permissions, sys_menu_permissions, dan sys_group_permissions sekaligus.",
+                "operationId": "209ea08492dfcdd2e60d4389858e8c57",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_sys_group",
+                                    "id_sys_menu",
+                                    "code",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "id_sys_group": {
+                                        "description": "ID Group / Role",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "id_sys_menu": {
+                                        "description": "ID Menu tujuan",
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "code": {
+                                        "description": "Kode aksi unik",
+                                        "type": "string",
+                                        "example": "export_pdf"
+                                    },
+                                    "description": {
+                                        "description": "Label aksi",
+                                        "type": "string",
+                                        "example": "Export Data ke PDF"
+                                    },
+                                    "id_organization": {
+                                        "description": "ID Organisasi (opsional)",
+                                        "type": "integer",
+                                        "example": 17
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Action berhasil ditambahkan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Action berhasil ditambahkan"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id_sys_menu_permission": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "export_pdf"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Export Data ke PDF"
+                                                },
+                                                "checked": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menambahkan action",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-group-permissions/remove-action": {
+            "post": {
+                "tags": [
+                    "Sys Group Permissions"
+                ],
+                "summary": "Hapus Custom Action dari Menu",
+                "description": "Mencabut aksi dari keterikatannya dengan menu. Menghapus dari sys_group_permissions dan sys_menu_permissions. Data di sys_permissions tetap utuh.",
+                "operationId": "78664b99288d1fbde6a465112f78045e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_sys_menu_permission"
+                                ],
+                                "properties": {
+                                    "id_sys_menu_permission": {
+                                        "description": "ID Menu Permission yang ingin dihapus",
+                                        "type": "integer",
+                                        "example": 32
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Action berhasil dihapus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Action berhasil dihapus dari menu"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Action tidak ditemukan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Action tidak ditemukan pada menu ini"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menghapus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-menus": {
+            "get": {
+                "tags": [
+                    "Sys Menu"
+                ],
+                "summary": "Daftar Menu (Paginated)",
+                "description": "Mengambil daftar seluruh menu sistem secara paginasi. Mendukung pencarian dan sorting.",
+                "operationId": "eee2f25a23e1fc8ff38f833f5862c5f4",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Halaman aktif",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pagesize",
+                        "in": "query",
+                        "description": "Jumlah data per halaman",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Urutan data (kolom asc/desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "page_size": {
+                                            "type": "integer"
+                                        },
+                                        "total_page": {
+                                            "type": "integer"
+                                        },
+                                        "total_records": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Sys Menu"
+                ],
+                "summary": "Tambah Menu Baru",
+                "description": "Membuat menu baru dan otomatis menambahkan permission default (index, create, update, delete).",
+                "operationId": "64f89b8ae903774db0f4ddcfcb72a15d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "url"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Laporan"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "example": "/laporan"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Menu Laporan"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "📊"
+                                    },
+                                    "menu_order": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "visible": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "id_menu_parent": {
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Menu berhasil dibuat",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "data created"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sys-menus/{id}": {
+            "get": {
+                "tags": [
+                    "Sys Menu"
+                ],
+                "summary": "Detail Menu",
+                "description": "Menampilkan detail satu menu berdasarkan ID.",
+                "operationId": "89088e134027872c16041e2dd8a5bef6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Menu",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Sys Menu"
+                ],
+                "summary": "Update Menu",
+                "description": "Memperbarui data menu yang sudah ada.",
+                "operationId": "4594aca0fc239d6819555c75137f624f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Menu",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Laporan Baru"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "example": "/laporan-baru"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "📈"
+                                    },
+                                    "menu_order": {
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "visible": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data berhasil diupdate",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "data updated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Sys Menu"
+                ],
+                "summary": "Hapus Menu",
+                "description": "Menghapus menu beserta mapping permission yang terkait.",
+                "operationId": "986da26190b7379b02b4b1d6dbecec3d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID Menu",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data berhasil dihapus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "data deleted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Data tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Masukkan token dengan format: Bearer {access_token}",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Endpoint Autentikasi (Register, Login, Logout)"
+        },
+        {
+            "name": "Sys Menu",
+            "description": "CRUD Manajemen Menu Sistem"
+        },
+        {
+            "name": "Sys Groups",
+            "description": "CRUD Manajemen Grup / Role Pengguna"
+        },
+        {
+            "name": "Sys Group Permissions",
+            "description": "Manajemen Hak Akses Role (Mapping, Sync, Add/Remove Action)"
+        }
+    ]
+}

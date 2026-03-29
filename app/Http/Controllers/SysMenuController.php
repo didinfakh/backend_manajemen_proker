@@ -6,6 +6,7 @@ use App\Models\SysMenu;
 use App\Models\SysMenuPermission;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use OpenApi\Attributes as OA;
 
 class SysMenuController extends BaseController
 {
@@ -16,12 +17,75 @@ class SysMenuController extends BaseController
         $this->model = $model;
     }
 
-    /**
-     * Create a new resource object, from "posted" parameters
-     * Custom override to also create default permissions 1, 2, 3, 4
-     *
-     * @return JsonResponse
-     */
+    #[OA\Get(
+        path: '/api/sys-menus',
+        summary: 'Daftar Menu (Paginated)',
+        description: 'Mengambil daftar seluruh menu sistem secara paginasi. Mendukung pencarian dan sorting.',
+        security: [['sanctum' => []]],
+        tags: ['Sys Menu'],
+        parameters: [
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer'), description: 'Halaman aktif'),
+            new OA\Parameter(name: 'pagesize', in: 'query', required: false, schema: new OA\Schema(type: 'integer'), description: 'Jumlah data per halaman'),
+            new OA\Parameter(name: 'order', in: 'query', required: false, schema: new OA\Schema(type: 'string'), description: 'Urutan data (kolom asc/desc)'),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Berhasil',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                        new OA\Property(property: 'page', type: 'integer'),
+                        new OA\Property(property: 'page_size', type: 'integer'),
+                        new OA\Property(property: 'total_page', type: 'integer'),
+                        new OA\Property(property: 'total_records', type: 'integer'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
+    public function index(Request $request): JsonResponse
+    {
+        return parent::index($request);
+    }
+
+    #[OA\Post(
+        path: '/api/sys-menus',
+        summary: 'Tambah Menu Baru',
+        description: 'Membuat menu baru dan otomatis menambahkan permission default (index, create, update, delete).',
+        security: [['sanctum' => []]],
+        tags: ['Sys Menu'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name', 'url'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', example: 'Laporan'),
+                    new OA\Property(property: 'url', type: 'string', example: '/laporan'),
+                    new OA\Property(property: 'description', type: 'string', example: 'Menu Laporan'),
+                    new OA\Property(property: 'icon', type: 'string', example: '📊'),
+                    new OA\Property(property: 'menu_order', type: 'integer', example: 10),
+                    new OA\Property(property: 'visible', type: 'boolean', example: true),
+                    new OA\Property(property: 'id_menu_parent', type: 'integer', example: null, nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Menu berhasil dibuat',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                        new OA\Property(property: 'message', type: 'string', example: 'data created'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validasi gagal'),
+        ]
+    )]
     public function store(Request $request): JsonResponse
     {
         $rules = property_exists($this->model, 'rules') ? $this->model->rules : [];
@@ -31,13 +95,11 @@ class SysMenuController extends BaseController
 
         $data = $request->all();
 
-        // Menggunakan create agar event booting (seperti otomatis set id_organization) tertrigger
         $modelInstance = $this->model->create($data);
         $id = $modelInstance->getKey();
         $primaryKey = $this->model->getKeyName();
         $data[$primaryKey] = $id;
 
-        // Otomatis menambahkan permissions 1, 2, 3, 4
         $permissions = [1, 2, 3, 4];
         foreach ($permissions as $permissionId) {
             SysMenuPermission::create([
@@ -49,29 +111,55 @@ class SysMenuController extends BaseController
         return $this->respondCreated($data, 'data created');
     }
 
-    /**
-     * Tampilkan detail sebuah menu
-     *
-     * @param mixed $id
-     * @return JsonResponse
-     */
+    #[OA\Get(
+        path: '/api/sys-menus/{id}',
+        summary: 'Detail Menu',
+        description: 'Menampilkan detail satu menu berdasarkan ID.',
+        security: [['sanctum' => []]],
+        tags: ['Sys Menu'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'ID Menu'),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Berhasil', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object')])),
+            new OA\Response(response: 404, description: 'Data tidak ditemukan'),
+        ]
+    )]
     public function show($id = null): JsonResponse
     {
         $record = $this->model->find($id);
         if (!$record) {
             return $this->failNotFound(sprintf('item with id %d not found', $id));
         }
-
         return $this->respond($record);
     }
 
-    /**
-     * Update data menu, dari properties "posted"
-     *
-     * @param mixed $id
-     * @param Request $request
-     * @return JsonResponse
-     */
+    #[OA\Put(
+        path: '/api/sys-menus/{id}',
+        summary: 'Update Menu',
+        description: 'Memperbarui data menu yang sudah ada.',
+        security: [['sanctum' => []]],
+        tags: ['Sys Menu'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'ID Menu'),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', example: 'Laporan Baru'),
+                    new OA\Property(property: 'url', type: 'string', example: '/laporan-baru'),
+                    new OA\Property(property: 'icon', type: 'string', example: '📈'),
+                    new OA\Property(property: 'menu_order', type: 'integer', example: 15),
+                    new OA\Property(property: 'visible', type: 'boolean', example: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Data berhasil diupdate', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object'), new OA\Property(property: 'message', type: 'string', example: 'data updated')])),
+            new OA\Response(response: 404, description: 'Data tidak ditemukan'),
+        ]
+    )]
     public function update($id = null, Request $request): JsonResponse
     {
         $rules = property_exists($this->model, 'rules') ? $this->model->rules : [];
@@ -84,31 +172,33 @@ class SysMenuController extends BaseController
         }
 
         $updateData = $request->all();
-        
-        // Kita menggunakan fungsi update bawaan BaseModel/Model (model eloquent)
-        // atau update yang ada dari extend jika ada. BaseController melakukan modifikasi data_before.
-        // Agar konsisten, kita assign dan save:
         $data_before->fill($updateData);
         $data_before->save();
 
         return $this->respond($data_before->toArray(), 200, 'data updated');
     }
 
-    /**
-     * Hapus sebuah menu berdasarkan id
-     *
-     * @param mixed $id
-     * @return JsonResponse
-     */
+    #[OA\Delete(
+        path: '/api/sys-menus/{id}',
+        summary: 'Hapus Menu',
+        description: 'Menghapus menu beserta mapping permission yang terkait.',
+        security: [['sanctum' => []]],
+        tags: ['Sys Menu'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'ID Menu'),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Data berhasil dihapus', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object'), new OA\Property(property: 'message', type: 'string', example: 'data deleted')])),
+            new OA\Response(response: 404, description: 'Data tidak ditemukan'),
+        ]
+    )]
     public function destroy($id = null): JsonResponse
     {
         $model = $this->model->find($id);
-
         if (!$model) {
             return $this->failNotFound(sprintf('item with id %d not found', $id));
         }
 
-        // Lakukan logging apabila method tersebut ada
         if (method_exists($this->model, 'logging')) {
             $this->model->logging(array(
                 "action" => "delete",
@@ -123,7 +213,6 @@ class SysMenuController extends BaseController
             return $this->failNotFound(sprintf('item with id %d not found or already deleted', $id));
         }
 
-        // Hapus juga permission yang berkaitan menggunakan observer sebenarnya bagus, namun dilakukan manual saja (bila belum ditangani foreign key onDelete cascade):
         \App\Models\SysMenuPermission::where('id_sys_menu', $id)->delete();
 
         return $this->respondDeleted(['id' => $id], 'data deleted');

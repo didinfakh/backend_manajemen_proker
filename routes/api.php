@@ -32,3 +32,17 @@ Route::middleware('auth:sanctum')
     ->group(function () {
         Route::apiResource('sys-menus', \App\Http\Controllers\SysMenuController::class);
     });
+
+Route::middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('sys-groups', \App\Http\Controllers\SysGroupController::class);
+    });
+
+Route::middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('sys-group-permissions', \App\Http\Controllers\SysGroupPermissionsController::class);
+        Route::get('sys-group-permissions/{id}/mapping', [\App\Http\Controllers\SysGroupPermissionsController::class, 'mapping']);
+        Route::post('sys-group-permissions/{id}/sync', [\App\Http\Controllers\SysGroupPermissionsController::class, 'sync']);
+        Route::post('sys-group-permissions/add-action', [\App\Http\Controllers\SysGroupPermissionsController::class, 'addAction']);
+        Route::post('sys-group-permissions/remove-action', [\App\Http\Controllers\SysGroupPermissionsController::class, 'removeAction']);
+    });
