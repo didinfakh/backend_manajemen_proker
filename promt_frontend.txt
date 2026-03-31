@@ -1,38 +1,59 @@
-Tolong buatkan komponen React (komponen Modular/Modal) menggunakan Tailwind CSS yang khusus menangani fitur **Menambah dan Menghapus Custom Action (Hak Akses)** pada suatu Menu.
 
-**Skenario / Flow UI yang Diinginkan:**
-1. Anggaplah pengguna sedang berada di halaman pengaturan Role dan sedang melihat deretan Menu. Saat pengguna menyorot atau mengeklik salah satu menu spesifik (misalnya menu "Laporan"), terdapat sebuah tombol **"Tambah Action Baru"**.
-2. Jika tombol "Tambah Action Baru" diklik, sebuah **Modal / Pop-up Form** muncul meminta inputan:
-   - **Kode Action** (Input teks, contoh: `export_pdf`, `approve_data`)
-   - **Deskripsi Action** (Input teks, contoh: `Export Data User ke PDF`)
-3. Di dalam Modal terdapat tombol "Simpan" untuk memanggil API Penambahan Action, dan tombol "Batal" untuk menutup Modal.
-4. Selain penambahan, di UI daftar action yang sudah ada pada menu tersebut, sediakan **Tombol Hapus (Icon Trash / Silang merah)** di sebelah label tiap-tiap action. Jika di-klik, panggil API Penghapusan Action.
 
-**Spesifikasi API Integrasi Backend:**
+**Prompt Tambahan: Migrasi ke Tree Menu API**
 
-**1. API Menambah Action Custom pada Menu**
-- Endpoint: `POST /api/sys-group-permissions/add-action`
-- Header: `Authorization: Bearer <token>`
-- Body Request:
-```json
-{
-  "id_sys_group": 1, 
-  "id_sys_menu": 15, 
-  "code": "export_pdf",
-  "description": "Export Data User ke PDF"
-}
-```
-*(Asumsi: `id_sys_group` adalah ID grup yang sedang diedit, dan `id_sys_menu` adalah ID dari menu di mana tombol tambah action ditekan).*
+**Objective:** Perbarui logika pengambilan (fetching) Menu di Frontend untuk menggunakan endpoint API Tree-Structured yang baru.
 
-**2. API Menghapus Action dari Menu**
-- Endpoint: `POST /api/sys-group-permissions/remove-action`
-- Header: `Authorization: Bearer <token>`
-- Body Request:
-```json
-{
-  "id_sys_menu_permission": 32
-}
-```
-*(Asumsi: `id_sys_menu_permission` merupakan ID unik masing-masing relasi action yang melekat pada Menu tersebut dan disematkan di tombol Hapus).*
+**Konteks:**
+Backend telah diperbarui untuk menyediakan endpoint khusus menu dalam format hirarkis (tree). Sebelumnya, frontend mungkin mengambil list flat dari `/api/sys-menus` dan membangun tree secara manual, atau hanya menampilkan list flat. Kita perlu migrasi ke endpoint tree khusus ini untuk mendukung sub-menu bersarang dan manajemen izin yang dinamis.
 
-Mohon buatkan kodenya. Siapkan struktur state React untuk Modal (open/close), form input, maupun indikator loading saat tombol "Simpan" atau "Hapus" sedang mengeksekusi request ke API.
+**Kebutuhan Teknis:**
+
+1. **Update API Endpoint:**
+   - Ubah endpoint fetching menu dari `GET /api/sys-menus` menjadi:
+     `GET /api/sys-menus/tree`
+   - Pastikan request tetap menyertakan header `Authorization: Bearer <token>`.
+
+2. **Menangani Struktur Data Rekursif:**
+   - Format response baru mengembalikan array `children` untuk setiap item menu.
+   - **Contoh Response:**
+     ```json
+     {
+       "success": true,
+       "data": [
+         {
+           "id_sys_menu": 1,
+           "name": "Dashboard",
+           "url": "/dashboard",
+           "id_menu_parent": null,
+           "children": []
+         },
+         {
+           "id_sys_menu": 2,
+           "name": "Management",
+           "id_menu_parent": null,
+           "children": [
+             {
+               "id_sys_menu": 3,
+               "name": "User List",
+               "url": "/users",
+               "id_menu_parent": 2,
+               "children": []
+             }
+           ]
+         }
+       ]
+     }
+     ```
+   - Perbarui state management (misal: Redux, Vuex, atau React State) dan komponen UI (Sidebar, Navbar) untuk merender `children` ini secara rekursif.
+
+3. **Integrasi dengan Custom Actions:**
+   - Sesuai rencana *Custom Action API*, pastikan jika ada action baru yang ditambahkan via `/api/sys-group-permissions/add-action`, frontend dapat menemukan item menu yang tepat di dalam tree (berdasarkan `id_sys_menu`) dan memperbarui action-nya secara dinamis tanpa perlu reload seluruh tree menu.
+
+4. **Pembersihan Logika Lama:**
+   - Jika sebelumnya ada kode di sisi client yang mengubah list flat menjadi tree secara manual, kode tersebut harus dihapus dan diganti dengan penggunaan langsung struktur tree dari backend.
+
+5. **Toast Notifications:**
+   - Gunakan library [react-hot-toast](https://react-hot-toast.com/) untuk menampilkan notifikasi sukses atau error saat fetching data atau saat terjadi perubahan status (seperti update permission).
+
+**Goal:** Pastikan sidebar/navigasi menu menampilkan item anak (child) yang bersarang di bawah induknya masing-masing sesuai data dari API.

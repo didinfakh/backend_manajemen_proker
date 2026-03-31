@@ -28,8 +28,9 @@ Route::middleware('auth:sanctum')
         Route::apiResource('sys-menu-permissions', \App\Http\Controllers\SysMenuPermissionsController::class);
     });
 
-Route::middleware('auth:sanctum')
+    Route::middleware('auth:sanctum')
     ->group(function () {
+        Route::get('sys-menus/tree', [\App\Http\Controllers\SysMenuController::class, 'getTree']);
         Route::apiResource('sys-menus', \App\Http\Controllers\SysMenuController::class);
     });
 

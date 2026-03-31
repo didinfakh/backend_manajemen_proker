@@ -50,6 +50,55 @@ class SysMenuController extends BaseController
         return parent::index($request);
     }
 
+    #[OA\Get(
+        path: '/api/sys-menus/tree',
+        summary: 'Daftar Menu (Tree)',
+        description: 'Mengambil daftar seluruh menu sistem dalam format tree (parent-children).',
+        security: [['sanctum' => []]],
+        tags: ['Sys Menu'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Berhasil',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object', properties: [
+                            new OA\Property(property: 'id_sys_menu', type: 'integer'),
+                            new OA\Property(property: 'name', type: 'string'),
+                            new OA\Property(property: 'url', type: 'string'),
+                            new OA\Property(property: 'id_menu_parent', type: 'integer', nullable: true),
+                            new OA\Property(property: 'children', type: 'array', items: new OA\Items(type: 'object'))
+                        ])),
+                        new OA\Property(property: 'success', type: 'boolean'),
+                        new OA\Property(property: 'message', type: 'string', nullable: true),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
+    public function getTree(): JsonResponse
+    {
+        $menus = SysMenu::orderBy('menu_order', 'asc')->get()->toArray();
+        $tree = $this->buildTree($menus);
+        return $this->respond($tree);
+    }
+
+    private function buildTree(array $elements, $parentId = null): array
+    {
+        $branch = [];
+
+        foreach ($elements as $element) {
+            if ($element['id_menu_parent'] == $parentId) {
+                $children = $this->buildTree($elements, $element['id_sys_menu']);
+                $element['children'] = $children;
+                $branch[] = $element;
+            }
+        }
+
+        return $branch;
+    }
+
     #[OA\Post(
         path: '/api/sys-menus',
         summary: 'Tambah Menu Baru',
