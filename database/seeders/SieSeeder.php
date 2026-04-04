@@ -10,7 +10,7 @@ class SieSeeder extends Seeder
     public function run(): void
     {
         // Clear existing data
-        DB::table('sie')->truncate();
+        DB::table('program_sie')->truncate();
 
         $data = [
         ];

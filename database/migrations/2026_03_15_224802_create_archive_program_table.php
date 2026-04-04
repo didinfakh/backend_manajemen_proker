@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->timestamp('deleted_at')->nullable();
             $table->bigInteger('id_organization')->nullable();
-            $table->foreign('id_program')->references('id_program')->on('program');
+            $table->foreign('id_program')->references('id_program')->on('program_kerja');
         });
     }
 

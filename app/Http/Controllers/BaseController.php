@@ -130,13 +130,13 @@ class BaseController extends ResourceController
 
         $data = $request->all();
 
-        $id = $this->model->insert($data);
-        // if (!$id) {
-        //     return $this->fail($this->model->errors());
-        // }
-        $data[$this->model->primaryKey] = $id;
-
-        return $this->respondCreated($data, 'data created');
+        // Use Eloquent create() instead of raw insert() to handle:
+        // 1. Auto-incrementing IDs (especially for Postgres)
+        // 2. Timestamps (created_at, updated_at)
+        // 3. BaseModel events (like auto-setting organization_id)
+        $record = $this->model->create($data);
+        
+        return $this->respondCreated($record, 'data created');
     }
 
     /**
@@ -190,14 +190,16 @@ class BaseController extends ResourceController
             ));
         }
 
-        $this->model->logging(
-            array(
-                "action" => "delete",
-                "table_name" => $this->model->table,
-                "activity" => "Menghapus data",
-                "data" => $data->get()->toArray()[0]
-            )
-        );
+        if (method_exists($this->model, 'logging')) {
+            $this->model->logging(
+                array(
+                    "action" => "delete",
+                    "table_name" => $this->model->table,
+                    "activity" => "Menghapus data",
+                    "data" => $data->toArray()
+                )
+            );
+        }
 
         $ret = $model->delete();
         if (!$ret) {

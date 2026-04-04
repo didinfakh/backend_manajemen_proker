@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sie', function (Blueprint $table) {
+        Schema::create('program_sie', function (Blueprint $table) {
                         $table->bigIncrements('id_sie');
             $table->bigInteger('id_program');
             $table->string('sie_name', 255);
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->timestamp('deleted_at')->nullable();
             $table->bigInteger('id_organization')->nullable();
-            $table->foreign('id_program')->references('id_program')->on('program');
+            $table->foreign('id_program')->references('id_program')->on('program_kerja');
         });
     }
 
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sie');
+        Schema::dropIfExists('program_sie');
     }
 };

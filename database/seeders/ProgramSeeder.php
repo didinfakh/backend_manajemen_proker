@@ -10,7 +10,7 @@ class ProgramSeeder extends Seeder
     public function run(): void
     {
         // Clear existing data
-        DB::table('program')->truncate();
+        DB::table('program_kerja')->truncate();
 
         $data = [
         ];

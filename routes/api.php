@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')
 
 Route::middleware('auth:sanctum')
     ->group(function () {
+        Route::apiResource('sys-users', \App\Http\Controllers\SysUserController::class);
         Route::apiResource('sys-groups', \App\Http\Controllers\SysGroupController::class);
     });
 
@@ -47,3 +48,12 @@ Route::middleware('auth:sanctum')
         Route::post('sys-group-permissions/add-action', [\App\Http\Controllers\SysGroupPermissionsController::class, 'addAction']);
         Route::post('sys-group-permissions/remove-action', [\App\Http\Controllers\SysGroupPermissionsController::class, 'removeAction']);
     });
+
+Route::middleware('auth:sanctum')
+    ->group(function () {
+        Route::apiResource('program-kerja', \App\Http\Controllers\ProgramKerjaController::class);
+        Route::apiResource('program-sie', \App\Http\Controllers\ProgramSieController::class);
+        Route::apiResource('program-sie-member', \App\Http\Controllers\ProgramSieMemberController::class);
+        Route::apiResource('task-status', \App\Http\Controllers\TaskStatusController::class);
+    });
+

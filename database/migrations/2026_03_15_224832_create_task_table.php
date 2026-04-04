@@ -25,8 +25,8 @@ return new class extends Migration
             $table->timestamp('deleted_at')->nullable();
             $table->bigInteger('id_organization')->nullable();
             $table->integer('id_master_status_task')->nullable();
-            $table->foreign('id_program')->references('id_program')->on('program');
-            $table->foreign('id_sie')->references('id_sie')->on('sie');
+            $table->foreign('id_program')->references('id_program')->on('program_kerja');
+            $table->foreign('id_sie')->references('id_sie')->on('program_sie');
         });
     }
 
