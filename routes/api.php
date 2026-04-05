@@ -55,5 +55,6 @@ Route::middleware('auth:sanctum')
         Route::apiResource('program-sie', \App\Http\Controllers\ProgramSieController::class);
         Route::apiResource('program-sie-member', \App\Http\Controllers\ProgramSieMemberController::class);
         Route::apiResource('task-status', \App\Http\Controllers\TaskStatusController::class);
+        Route::apiResource('tasks', \App\Http\Controllers\TaskController::class);
     });
 

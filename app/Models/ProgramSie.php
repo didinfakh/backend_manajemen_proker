@@ -15,12 +15,22 @@ class ProgramSie extends BaseModel
         'id_program',
         'sie_name',
         'description',
+        'id_koordinator',
     ];
 
     public $rules = [
-        'id_program' => 'required|integer',
-        'sie_name'   => 'required|string|max:255',
+        'id_program'     => 'required|integer',
+        'sie_name'       => 'required|string|max:255',
+        'id_koordinator' => 'nullable|integer',
     ];
+
+    /**
+     * Relation to User (Coordinator)
+     */
+    public function koordinator()
+    {
+        return $this->belongsTo(User::class, 'id_koordinator', 'id_user');
+    }
 
     public function scopeSearch($query, $search)
     {

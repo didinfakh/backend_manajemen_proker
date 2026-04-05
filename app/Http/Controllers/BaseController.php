@@ -164,10 +164,8 @@ class BaseController extends ResourceController
         // $data       = $request->getRawInput();		
         // $updateData = array_filter($data);
         $updateData = $request->all();
-        $ret = $this->model->update($id, $updateData, $data_before);
-        // if (!$ret) {
-        //     return $this->fail($this->model->errors());
-        // }
+        $ret = $data_before->update($updateData);
+
         return $this->respond($updateData, 200, 'data updated');
     }
 

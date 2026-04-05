@@ -28,6 +28,14 @@ class TaskStatus extends BaseModel
     ];
 
     /**
+     * Relation to Tasks
+     */
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'id_task_status', 'id_task_status');
+    }
+
+    /**
      * Scope for searching/filtering
      */
     public function scopeSearch(Builder $query, $search)
