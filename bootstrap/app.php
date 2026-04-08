@@ -15,5 +15,26 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                $errors = $e->validator->errors()->getMessages();
+                $formattedErrors = [];
+
+                foreach ($errors as $field => $messages) {
+                    $formattedErrors[$field] = array_map(function ($message) use ($field) {
+                        // Custom Indonesian message for 'required' rule
+                        if (str_contains(strtolower($message), 'required') || str_contains(strtolower($message), 'field is missing')) {
+                            return "field $field belum di isi";
+                        }
+                        return $message;
+                    }, $messages);
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $formattedErrors
+                ], 422);
+            }
+        });
     })->create();

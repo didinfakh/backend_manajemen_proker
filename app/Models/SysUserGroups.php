@@ -13,6 +13,11 @@ class SysUserGroups extends BaseModel
         'id_organization'
     ];
 
+    public $rules = [
+        'id_user'      => 'required|integer',
+        'id_sys_group' => 'required|integer',
+    ];
+
     protected $orderDefault = 'id desc';
 
     public function scopeSearch($query, $search)

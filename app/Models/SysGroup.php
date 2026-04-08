@@ -16,6 +16,11 @@ class SysGroup extends BaseModel
         'description',
     ];
 
+    public $rules = [
+        'name'        => 'required|string|max:100',
+        'description' => 'nullable|string',
+    ];
+
     public function scopeSearch($query, $search)
     {
         if (!$search) return $query;

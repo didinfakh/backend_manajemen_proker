@@ -13,6 +13,11 @@ class SysMenuPermissions extends BaseModel
         'id_organization'
     ];
 
+    public $rules = [
+        'id_sys_menu'       => 'required|integer',
+        'id_sys_permission' => 'required|integer',
+    ];
+
     protected $orderDefault = 'id desc';
 
     public function scopeSearch($query, $search)

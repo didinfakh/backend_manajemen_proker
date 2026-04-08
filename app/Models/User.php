@@ -24,7 +24,23 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'telegram_number',
     ];
+
+    public $rules = [
+        'name'            => 'required|string|max:255',
+        'email'           => 'required|email|max:255|unique:users,email',
+        'password'        => 'required|string|min:8',
+        'telegram_number' => 'nullable|string|max:20',
+    ];
+
+    public function getUpdateRules($id)
+    {
+        $rules = $this->rules;
+        $rules['email'] = 'required|email|max:255|unique:users,email,' . $id . ',id_user';
+        unset($rules['password']);
+        return $rules;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

@@ -13,6 +13,11 @@ class Produk extends BaseModel
         'id_organization'
     ];
 
+    public $rules = [
+        'code'        => 'required|string|max:100',
+        'description' => 'required|string',
+    ];
+
     protected $orderDefault = 'id desc';
 
     public function scopeSearch($query, $search)

@@ -126,6 +126,11 @@ class SysGroupPermissionsController extends BaseController
     )]
     public function sync(Request $request, $groupId)
     {
+        $request->validate([
+            'permissions' => 'required|array',
+            'permissions.*' => 'integer',
+        ]);
+
         $permissions = $request->input('permissions', []);
         $organizationId = $request->input('id_organization', 17);
 

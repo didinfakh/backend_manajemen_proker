@@ -19,6 +19,11 @@ class SysMenu extends BaseModel
         'icon',
     ];
 
+    public $rules = [
+        'name' => 'required|string|max:100',
+        'url'  => 'required|string|max:255',
+    ];
+
     protected $orderDefault = 'id desc';
 
     public function scopeSearch($query, $search)

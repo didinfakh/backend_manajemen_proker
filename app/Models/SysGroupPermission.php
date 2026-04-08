@@ -13,6 +13,11 @@ class SysGroupPermission extends BaseModel
         'id_organization',
     ];
 
+    public $rules = [
+        'id_sys_group'           => 'required|integer',
+        'id_sys_menu_permission' => 'required|integer',
+    ];
+
     protected $orderDefault = 'id_sys_group_permission desc';
 
     public function scopeSearch($query, $search)

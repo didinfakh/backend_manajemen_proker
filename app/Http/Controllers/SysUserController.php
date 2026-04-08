@@ -69,6 +69,7 @@ class SysUserController extends BaseController
                     new OA\Property(property: 'name', type: 'string', example: 'Jane Doe'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'jane@example.com'),
                     new OA\Property(property: 'password', type: 'string', example: 'password123'),
+                    new OA\Property(property: 'telegram_number', type: 'string', example: '08123456789'),
                 ]
             )
         ),
@@ -100,7 +101,7 @@ class SysUserController extends BaseController
             content: new OA\JsonContent(properties: [
                 new OA\Property(property: 'name', type: 'string'),
                 new OA\Property(property: 'email', type: 'string'),
-                new OA\Property(property: 'password', type: 'string'),
+                new OA\Property(property: 'telegram_number', type: 'string'),
             ])
         ),
         responses: [
@@ -110,11 +111,17 @@ class SysUserController extends BaseController
     )]
     public function update($id = null, Request $request): JsonResponse
     {
-        // Encrypt password if present
-        if ($request->has('password') && $request->password != null) {
-            $request->merge(['password' => bcrypt($request->password)]);
+        $request->validate($this->model->getUpdateRules($id));
+        
+        $data = $request->except(['password']);
+        
+        if (!$record = $this->model->find($id)) {
+            return $this->failNotFound(sprintf('item with id %d not found', $id));
         }
-        return parent::update($id, $request);
+
+        $record->update($data);
+
+        return $this->respond($data, 200, 'data updated');
     }
 
     #[OA\Delete(
