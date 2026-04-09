@@ -7,11 +7,32 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
+
+    /**
+     * Boot model (auto set organization on create)
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('organization', function ($builder) {
+            if (app()->bound('id_organization')) {
+                $builder->where('id_organization', (int) app('id_organization'));
+            }
+        });
+
+        static::creating(function ($model) {
+            if (empty($model->id_organization)) {
+                $model->id_organization = app()->bound('id_organization')
+                    ? (int) app('id_organization')
+                    : null;
+            }
+        });
+    }
 
     protected $primaryKey = 'id_user';
 
@@ -25,6 +46,7 @@ class User extends Authenticatable
         'email',
         'password',
         'telegram_number',
+        'id_organization',
     ];
 
     public $rules = [
@@ -38,7 +60,7 @@ class User extends Authenticatable
     {
         $rules = $this->rules;
         $rules['email'] = 'required|email|max:255|unique:users,email,' . $id . ',id_user';
-        unset($rules['password']);
+        $rules['password'] = 'nullable|string|min:8';
         return $rules;
     }
 
@@ -65,8 +87,24 @@ class User extends Authenticatable
         ];
     }
 
+    protected $appends = ['id_sys_group'];
+
+    public function groups()
+    {
+        return $this->hasMany(SysUserGroups::class, 'id_user', 'id_user');
+    }
+
+    public function getIdSysGroupAttribute()
+    {
+        if ($this->relationLoaded('groups')) {
+            return $this->groups->first()?->id_sys_group;
+        }
+        return $this->groups()->first()?->id_sys_group;
+    }
+
     public function scopeSearch($query, $search)
     {
+        $query->with('groups');
         if (!$search) return $query;
 
         foreach ($search as $field => $value) {

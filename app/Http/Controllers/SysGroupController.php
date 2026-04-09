@@ -96,7 +96,13 @@ class SysGroupController extends BaseController
     )]
     public function store(Request $request): JsonResponse
     {
-        return parent::store($request);
+        $validated = $request->validate($this->model->getStoreRules(), [
+            'name.unique' => 'Nama group sudah digunakan pada organisasi ini.',
+        ]);
+
+        $record = $this->model->create($validated);
+
+        return $this->respondCreated($record, 'data created');
     }
 
     #[OA\Put(
@@ -124,7 +130,17 @@ class SysGroupController extends BaseController
     )]
     public function update($id = null, Request $request): JsonResponse
     {
-        return parent::update($id, $request);
+        if (!$record = $this->model->find($id)) {
+            return $this->failNotFound(sprintf('item with id %d not found', $id));
+        }
+
+        $validated = $request->validate($this->model->getUpdateRules((int) $id), [
+            'name.unique' => 'Nama group sudah digunakan pada organisasi ini.',
+        ]);
+
+        $record->update($validated);
+
+        return $this->respond($record->fresh(), 200, 'data updated');
     }
 
     #[OA\Delete(
@@ -143,6 +159,22 @@ class SysGroupController extends BaseController
     )]
     public function destroy($id = null): JsonResponse
     {
-        return parent::destroy($id);
+        $record = $this->model->withCount(['userGroups', 'permissions'])->find($id);
+
+        if (!$record) {
+            return $this->failNotFound(sprintf('item with id %d not found', $id));
+        }
+
+        if ($record->user_groups_count > 0) {
+            return $this->fail('group masih dipakai oleh user dan tidak bisa dihapus', 422);
+        }
+
+        if ($record->permissions_count > 0) {
+            return $this->fail('group masih memiliki permission dan tidak bisa dihapus', 422);
+        }
+
+        $record->delete();
+
+        return $this->respondDeleted(['id' => $id], 'data deleted');
     }
 }

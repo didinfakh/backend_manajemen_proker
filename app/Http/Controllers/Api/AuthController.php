@@ -131,7 +131,7 @@ class AuthController extends Controller
 
         $url_sso = config('services.sso.url');
         $response_sso = Http::withHeaders([
-            'id_organization' => '1',
+            'id_application' => '1',
         ])->post($url_sso . '/api/loginbyid', [
             'id_user' => $user->id_organization
         ]);
@@ -151,6 +151,11 @@ class AuthController extends Controller
         }
 
         Cache::put("perm:user:{$user->id_user}", $permissionMap, now()->addHours(6));
+
+        // Cache organization context
+        if ($user->id_organization) {
+            Cache::put("user_org:{$user->id_user}", $user->id_organization, now()->addHours(24));
+        }
 
         return response()->json([
             'message' => 'Login success',

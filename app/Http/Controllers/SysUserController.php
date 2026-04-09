@@ -70,6 +70,7 @@ class SysUserController extends BaseController
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'jane@example.com'),
                     new OA\Property(property: 'password', type: 'string', example: 'password123'),
                     new OA\Property(property: 'telegram_number', type: 'string', example: '08123456789'),
+                    new OA\Property(property: 'id_sys_group', type: 'integer', example: 1),
                 ]
             )
         ),
@@ -80,11 +81,27 @@ class SysUserController extends BaseController
     )]
     public function store(Request $request): JsonResponse
     {
-        // Encrypt password if present
+        $request->validate($this->model->rules);
+        
+        $data = $request->all();
+        
         if ($request->has('password')) {
-            $request->merge(['password' => bcrypt($request->password)]);
+            $data['password'] = bcrypt($request->password);
         }
-        return parent::store($request);
+        
+        return \DB::transaction(function() use ($data, $request) {
+            $record = $this->model->create($data);
+            
+            if ($request->has('id_sys_group')) {
+                \App\Models\SysUserGroups::create([
+                    'id_user' => $record->id_user,
+                    'id_sys_group' => $request->id_sys_group,
+                    'id_organization' => $record->id_organization
+                ]);
+            }
+            
+            return $this->respondCreated($record, 'data created');
+        });
     }
 
     #[OA\Put(
@@ -101,27 +118,46 @@ class SysUserController extends BaseController
             content: new OA\JsonContent(properties: [
                 new OA\Property(property: 'name', type: 'string'),
                 new OA\Property(property: 'email', type: 'string'),
+                new OA\Property(property: 'password', type: 'string'),
                 new OA\Property(property: 'telegram_number', type: 'string'),
+                new OA\Property(property: 'id_sys_group', type: 'integer'),
             ])
         ),
         responses: [
             new OA\Response(response: 200, description: 'Data berhasil diupdate', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object'), new OA\Property(property: 'message', type: 'string')])),
             new OA\Response(response: 404, description: 'Data tidak ditemukan'),
+            new OA\Response(response: 422, description: 'Validasi gagal'),
         ]
     )]
     public function update($id = null, Request $request): JsonResponse
     {
         $request->validate($this->model->getUpdateRules($id));
         
-        $data = $request->except(['password']);
-        
         if (!$record = $this->model->find($id)) {
             return $this->failNotFound(sprintf('item with id %d not found', $id));
         }
 
-        $record->update($data);
+        $data = $request->only(['name', 'email', 'telegram_number']);
+        
+        if ($request->filled('password')) {
+            $data['password'] = bcrypt($request->password);
+        }
 
-        return $this->respond($data, 200, 'data updated');
+        return \DB::transaction(function() use ($record, $data, $request) {
+            $record->update($data);
+
+            if ($request->has('id_sys_group')) {
+                \App\Models\SysUserGroups::updateOrCreate(
+                    ['id_user' => $record->id_user],
+                    [
+                        'id_sys_group' => $request->id_sys_group,
+                        'id_organization' => $record->id_organization
+                    ]
+                );
+            }
+
+            return $this->respond($record, 200, 'data updated');
+        });
     }
 
     #[OA\Delete(

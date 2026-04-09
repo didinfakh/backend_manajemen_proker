@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 abstract class BaseModel extends Model
 {
+    use SoftDeletes;
     /**
      * Kolom organization default
      * Bisa dioverride di child model
@@ -58,8 +59,8 @@ abstract class BaseModel extends Model
      */
     protected static function getOrganizationId(): ?int
     {
-        return app()->bound('organization_id')
-            ? (int) app('organization_id')
+        return app()->bound('id_organization')
+            ? (int) app('id_organization')
             : null;
     }
 

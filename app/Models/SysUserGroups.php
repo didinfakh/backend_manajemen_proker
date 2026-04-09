@@ -5,6 +5,7 @@ namespace App\Models;
 class SysUserGroups extends BaseModel
 {
     protected $table = 'sys_user_groups';
+    protected $primaryKey = 'id_sys_user_group';
 
     protected $fillable = [
         'id_sys_user_group',

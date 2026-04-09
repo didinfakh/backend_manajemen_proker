@@ -145,19 +145,16 @@ class SysMenuController extends BaseController
         $data = $request->all();
 
         $modelInstance = $this->model->create($data);
-        $id = $modelInstance->getKey();
-        $primaryKey = $this->model->getKeyName();
-        $data[$primaryKey] = $id;
 
         $permissions = [1, 2, 3, 4];
         foreach ($permissions as $permissionId) {
             SysMenuPermission::create([
-                'id_sys_menu' => $id,
+                'id_sys_menu' => $modelInstance->id_sys_menu,
                 'id_sys_permission' => $permissionId,
             ]);
         }
 
-        return $this->respondCreated($data, 'data created');
+        return $this->respondCreated($modelInstance, 'data created');
     }
 
     #[OA\Get(
@@ -221,10 +218,9 @@ class SysMenuController extends BaseController
         }
 
         $updateData = $request->all();
-        $data_before->fill($updateData);
-        $data_before->save();
+        $data_before->update($updateData);
 
-        return $this->respond($data_before->toArray(), 200, 'data updated');
+        return $this->respond($data_before->refresh(), 200, 'data updated');
     }
 
     #[OA\Delete(

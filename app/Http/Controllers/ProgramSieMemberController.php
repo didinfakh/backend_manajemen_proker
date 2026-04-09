@@ -33,7 +33,39 @@ class ProgramSieMemberController extends BaseController
     )]
     public function index(Request $request): JsonResponse
     {
-        return parent::index($request);
+        $search = $request->get('q');
+        $page   = $request->get('page') ?? 1;
+        $limit  = $request->get('pagesize') ?? $this->limit;
+        
+        $query = $this->model->with(['user', 'sie'])->search($search);
+
+        // Sorting logic
+        $orderby = $request->get('order');
+        if ($orderby) {
+            $orderby = explode(",", $orderby);
+            foreach ($orderby as $v) {
+                $exp = explode(" ", trim($v));
+                $column = $exp[0];
+                $sc = $exp[1] ?? 'asc';
+                $query = $query->orderBy($column, $sc);
+            }
+        } else {
+            $query = $query->orderBy($this->model->getKeyName());
+        }
+
+        $data = $query->paginate($limit);
+
+        return $this->respond(
+            $data->items(),
+            200,
+            null,
+            [
+                'page' => $data->currentPage(),
+                'page_size' => $data->perPage(),
+                'total_page' => $data->lastPage(),
+                'total_records' => $data->total()
+            ]
+        );
     }
 
     #[OA\Get(
@@ -52,7 +84,11 @@ class ProgramSieMemberController extends BaseController
     )]
     public function show($id = null): JsonResponse
     {
-        return parent::show($id);
+        $record = $this->model->with(['user', 'sie'])->find($id);
+        if (!$record) {
+            return $this->failNotFound("Sie Member with id $id not found");
+        }
+        return $this->respond($record);
     }
 
     #[OA\Post(
@@ -64,10 +100,10 @@ class ProgramSieMemberController extends BaseController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['id_sie', 'id_auth_user'],
+                required: ['id_sie', 'id_user'],
                 properties: [
                     new OA\Property(property: 'id_sie', type: 'integer', example: 1),
-                    new OA\Property(property: 'id_auth_user', type: 'integer', example: 1),
+                    new OA\Property(property: 'id_user', type: 'integer', example: 1),
                     new OA\Property(property: 'role', type: 'string', example: 'Koordinator'),
                 ]
             )
@@ -93,7 +129,7 @@ class ProgramSieMemberController extends BaseController
         ],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(properties: [new OA\Property(property: 'role', type: 'string')])
+            content: new OA\JsonContent(properties: [new OA\Property(property: 'role', type: 'string'), new OA\Property(property: 'id_user', type: 'integer')])
         ),
         responses: [
             new OA\Response(response: 200, description: 'Data berhasil diupdate', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object'), new OA\Property(property: 'message', type: 'string')])),

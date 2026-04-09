@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProgramSie;
+use App\Models\ProgramSieMember;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 class ProgramSieController extends BaseController
@@ -33,7 +35,39 @@ class ProgramSieController extends BaseController
     )]
     public function index(Request $request): JsonResponse
     {
-        return parent::index($request);
+        $search = $request->get('q');
+        $page   = $request->get('page') ?? 1;
+        $limit  = $request->get('pagesize') ?? $this->limit;
+        
+        $query = $this->model->with(['members.user'])->search($search);
+
+        // Sorting logic
+        $orderby = $request->get('order');
+        if ($orderby) {
+            $orderby = explode(",", $orderby);
+            foreach ($orderby as $v) {
+                $exp = explode(" ", trim($v));
+                $column = $exp[0];
+                $sc = $exp[1] ?? 'asc';
+                $query = $query->orderBy($column, $sc);
+            }
+        } else {
+            $query = $query->orderBy($this->model->getKeyName());
+        }
+
+        $data = $query->paginate($limit);
+
+        return $this->respond(
+            $data->items(),
+            200,
+            null,
+            [
+                'page' => $data->currentPage(),
+                'page_size' => $data->perPage(),
+                'total_page' => $data->lastPage(),
+                'total_records' => $data->total()
+            ]
+        );
     }
 
     #[OA\Get(
@@ -52,13 +86,17 @@ class ProgramSieController extends BaseController
     )]
     public function show($id = null): JsonResponse
     {
-        return parent::show($id);
+        $record = $this->model->with(['members.user', 'koordinator'])->find($id);
+        if (!$record) {
+            return $this->failNotFound("Sie with id $id not found");
+        }
+        return $this->respond($record);
     }
 
     #[OA\Post(
         path: '/api/program-sie',
         summary: 'Tambah Sie Baru',
-        description: 'Membuat sie program baru.',
+        description: 'Membuat sie program baru beserta anggotanya.',
         security: [['sanctum' => []]],
         tags: ['Program Sie'],
         requestBody: new OA\RequestBody(
@@ -69,6 +107,13 @@ class ProgramSieController extends BaseController
                     new OA\Property(property: 'id_program', type: 'integer', example: 1),
                     new OA\Property(property: 'sie_name', type: 'string', example: 'Humas'),
                     new OA\Property(property: 'description', type: 'string', example: 'Sie Hubungan Masyarakat'),
+                    new OA\Property(property: 'id_koordinator', type: 'integer', example: 1),
+                    new OA\Property(property: 'members', type: 'array', items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'id_user', type: 'integer', example: 1),
+                            new OA\Property(property: 'role', type: 'string', example: 'Anggota'),
+                        ]
+                    )),
                 ]
             )
         ),
@@ -79,13 +124,33 @@ class ProgramSieController extends BaseController
     )]
     public function store(Request $request): JsonResponse
     {
-        return parent::store($request);
+        $request->validate(array_merge($this->model->rules, [
+            'members'           => 'nullable|array',
+            'members.*.id_user' => 'required|integer',
+            'members.*.role'    => 'nullable|string|max:100',
+        ]));
+
+        return DB::transaction(function () use ($request) {
+            $data = $request->all();
+            $record = $this->model->create($data);
+
+            if ($request->has('members')) {
+                foreach ($request->members as $member) {
+                    $record->members()->create([
+                        'id_user' => $member['id_user'],
+                        'role'    => $member['role'] ?? null,
+                    ]);
+                }
+            }
+
+            return $this->respondCreated($record->load(['members.user', 'koordinator']), 'Sie created successfully');
+        });
     }
 
     #[OA\Put(
         path: '/api/program-sie/{id}',
         summary: 'Update Sie Program',
-        description: 'Memperbarui data sie program yang sudah ada.',
+        description: 'Memperbarui data sie program dan daftar anggotanya.',
         security: [['sanctum' => []]],
         tags: ['Program Sie'],
         parameters: [
@@ -93,7 +158,19 @@ class ProgramSieController extends BaseController
         ],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(properties: [new OA\Property(property: 'sie_name', type: 'string'), new OA\Property(property: 'description', type: 'string')])
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'sie_name', type: 'string'), 
+                    new OA\Property(property: 'description', type: 'string'),
+                    new OA\Property(property: 'id_koordinator', type: 'integer'),
+                    new OA\Property(property: 'members', type: 'array', items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'id_user', type: 'integer'),
+                            new OA\Property(property: 'role', type: 'string'),
+                        ]
+                    )),
+                ]
+            )
         ),
         responses: [
             new OA\Response(response: 200, description: 'Data berhasil diupdate', content: new OA\JsonContent(properties: [new OA\Property(property: 'data', type: 'object'), new OA\Property(property: 'message', type: 'string')])),
@@ -102,7 +179,33 @@ class ProgramSieController extends BaseController
     )]
     public function update($id = null, Request $request): JsonResponse
     {
-        return parent::update($id, $request);
+        $record = $this->model->find($id);
+        if (!$record) {
+            return $this->failNotFound("Sie with id $id not found");
+        }
+
+        $request->validate(array_merge($this->model->rules, [
+            'members'           => 'nullable|array',
+            'members.*.id_user' => 'required|integer',
+            'members.*.role'    => 'nullable|string|max:100',
+        ]));
+
+        return DB::transaction(function () use ($request, $record) {
+            $record->update($request->all());
+
+            if ($request->has('members')) {
+                // Simple sync: delete all and recreate
+                $record->members()->delete();
+                foreach ($request->members as $member) {
+                    $record->members()->create([
+                        'id_user' => $member['id_user'],
+                        'role'    => $member['role'] ?? null,
+                    ]);
+                }
+            }
+
+            return $this->respond($record->load(['members.user', 'koordinator']), 200, 'Sie updated successfully');
+        });
     }
 
     #[OA\Delete(

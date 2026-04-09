@@ -32,6 +32,14 @@ class ProgramSie extends BaseModel
         return $this->belongsTo(User::class, 'id_koordinator', 'id_user');
     }
 
+    /**
+     * Relation to Members
+     */
+    public function members()
+    {
+        return $this->hasMany(ProgramSieMember::class, 'id_sie', 'id_sie');
+    }
+
     public function scopeSearch($query, $search)
     {
         if (!$search) return $query;

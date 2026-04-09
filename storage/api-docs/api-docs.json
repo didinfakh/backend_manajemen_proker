@@ -557,7 +557,7 @@
                     "Program Sie"
                 ],
                 "summary": "Tambah Sie Baru",
-                "description": "Membuat sie program baru.",
+                "description": "Membuat sie program baru beserta anggotanya.",
                 "operationId": "5838c621b0898383e082c5fe8469e223",
                 "requestBody": {
                     "required": true,
@@ -580,6 +580,26 @@
                                     "description": {
                                         "type": "string",
                                         "example": "Sie Hubungan Masyarakat"
+                                    },
+                                    "id_koordinator": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "members": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id_user": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "Anggota"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -667,7 +687,7 @@
                     "Program Sie"
                 ],
                 "summary": "Update Sie Program",
-                "description": "Memperbarui data sie program yang sudah ada.",
+                "description": "Memperbarui data sie program dan daftar anggotanya.",
                 "operationId": "e20f0522c9d312aafff43b34c26856f5",
                 "parameters": [
                     {
@@ -691,6 +711,23 @@
                                     },
                                     "description": {
                                         "type": "string"
+                                    },
+                                    "id_koordinator": {
+                                        "type": "integer"
+                                    },
+                                    "members": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id_user": {
+                                                    "type": "integer"
+                                                },
+                                                "role": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
                                     }
                                 },
                                 "type": "object"
@@ -846,14 +883,14 @@
                             "schema": {
                                 "required": [
                                     "id_sie",
-                                    "id_auth_user"
+                                    "id_user"
                                 ],
                                 "properties": {
                                     "id_sie": {
                                         "type": "integer",
                                         "example": 1
                                     },
-                                    "id_auth_user": {
+                                    "id_user": {
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -968,6 +1005,9 @@
                                 "properties": {
                                     "role": {
                                         "type": "string"
+                                    },
+                                    "id_user": {
+                                        "type": "integer"
                                     }
                                 },
                                 "type": "object"
@@ -2264,6 +2304,14 @@
                                     "password": {
                                         "type": "string",
                                         "example": "password123"
+                                    },
+                                    "telegram_number": {
+                                        "type": "string",
+                                        "example": "08123456789"
+                                    },
+                                    "id_sys_group": {
+                                        "type": "integer",
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
@@ -2378,6 +2426,12 @@
                                     },
                                     "password": {
                                         "type": "string"
+                                    },
+                                    "telegram_number": {
+                                        "type": "string"
+                                    },
+                                    "id_sys_group": {
+                                        "type": "integer"
                                     }
                                 },
                                 "type": "object"
@@ -2406,6 +2460,9 @@
                     },
                     "404": {
                         "description": "Data tidak ditemukan"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
                     }
                 },
                 "security": [
@@ -2458,6 +2515,204 @@
                 "security": [
                     {
                         "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/tasks": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Get list of tasks",
+                "operationId": "471d938a3bfaeb6fbd981d7c3e2728b0",
+                "parameters": [
+                    {
+                        "name": "q[id_program]",
+                        "in": "query",
+                        "description": "Filter by ID Program",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "q[id_sie]",
+                        "in": "query",
+                        "description": "Filter by ID Sie",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "q[id_task_status]",
+                        "in": "query",
+                        "description": "Filter by Task Status",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Create new task",
+                "operationId": "f803ebdb2300acdb7e93bbe8d0b9a2e8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_program",
+                                    "id_task_status",
+                                    "title"
+                                ],
+                                "properties": {
+                                    "id_program": {
+                                        "type": "integer"
+                                    },
+                                    "id_sie": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "id_task_status": {
+                                        "type": "integer"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "id_user": {
+                                        "description": "Array of user IDs to assign",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/tasks/{id}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Get detail of task",
+                "operationId": "90b3cd4d2d4b416dc989d2055dbed06c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Update task",
+                "operationId": "1aaf37e74360ef4c10fadaee02ae77fb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "id_task_status": {
+                                        "type": "integer"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "due_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "id_user": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -2700,6 +2955,10 @@
         {
             "name": "System User",
             "description": "System User"
+        },
+        {
+            "name": "Tasks",
+            "description": "Tasks"
         },
         {
             "name": "Task Status",

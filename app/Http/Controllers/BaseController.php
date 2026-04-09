@@ -56,15 +56,18 @@ class BaseController extends ResourceController
 
                 $db = $db->orderBy($column, $sc);
             }
-        } else if ($this->model->orderDefault) {
+        } else if (isset($this->model->orderDefault)) {
             $exp = explode(",", $this->model->orderDefault);
             if (!is_array($exp))
                 $exp = array($exp);
 
             foreach ($exp as $v)
                 $db = $db->orderByRaw(trim($v));
-        } else if ($this->model->primaryKey) {
-            $db = $db->orderBy($this->model->primaryKey);
+        } else {
+            $primaryKey = $this->model->getKeyName();
+            if ($primaryKey) {
+                $db = $db->orderBy($primaryKey);
+            }
         }
 
         // if($filter)
@@ -132,6 +135,7 @@ class BaseController extends ResourceController
 
         // Use Eloquent create() instead of raw insert() to handle:
         // 1. Auto-incrementing IDs (especially for Postgres)
+        
         // 2. Timestamps (created_at, updated_at)
         // 3. BaseModel events (like auto-setting organization_id)
         $record = $this->model->create($data);
@@ -164,9 +168,9 @@ class BaseController extends ResourceController
         // $data       = $request->getRawInput();		
         // $updateData = array_filter($data);
         $updateData = $request->all();
-        $ret = $data_before->update($updateData);
+        $data_before->update($updateData);
 
-        return $this->respond($updateData, 200, 'data updated');
+        return $this->respond($data_before->refresh(), 200, 'data updated');
     }
 
     /**

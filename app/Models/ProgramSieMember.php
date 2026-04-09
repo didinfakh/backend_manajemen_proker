@@ -13,14 +13,24 @@ class ProgramSieMember extends BaseModel
 
     protected $fillable = [
         'id_sie',
-        'id_auth_user',
+        'id_user',
         'role',
     ];
 
     public $rules = [
-        'id_sie'       => 'required|integer',
-        'id_auth_user' => 'required|integer',
+        'id_sie'  => 'required|integer',
+        'id_user' => 'required|integer',
     ];
+
+    public function sie()
+    {
+        return $this->belongsTo(ProgramSie::class, 'id_sie', 'id_sie');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
 
     public function scopeSearch($query, $search)
     {
